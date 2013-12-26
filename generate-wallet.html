@@ -74,6 +74,322 @@
 
 	<title>Bitcoin Paper Wallet Generator</title>
 
+	<script type="text/javascript">
+/*
+Source: https://gist.github.com/3n/803329
+name: guilloche
+script: guilloche.js
+description: guilloche
+provides: [Guilloche]
+...
+*/
+var guilloche = function(canvas, opts) {
+	var opts = opts || {};
+	var ctx = canvas.getContext('2d'),
+		scale = opts.scale || 1
+  		size = {x: canvas.offsetWidth, y: canvas.offsetHeight},
+  		halfSize = {x: size.x / 2, y: size.y / 2},
+  		majorR = opts.majorR || 49,
+  		minorR = opts.minorR || 20.4324,
+  		angleMultiplier = opts.angleMultiplier || 1,
+  		radiusEffectConstant = opts.radiusEffectConstant || 33,
+  		steps = opts.steps || 1000,
+  		centerPoint = opts.centerPoint || { x: 0, y:0 },
+  		color = opts.color || 'rgb(0,0,255)',
+		width = opts.width || 0.5;
+  		globalAlpha = opts.globalAlpha || 1.0;
+ 
+	ctx.globalAlpha = globalAlpha;
+ 
+	var	diff = majorR - minorR,
+		s = diff / minorR,
+		theta = 0,
+		radiusEffect = radiusEffectConstant + minorR,
+		oldX, oldY;
+
+	for (var i = steps; i>0; --i) {
+		var new_theta = angleMultiplier * theta,
+			x = (diff * Math.sin(new_theta) + radiusEffect * Math.sin(new_theta * s))*scale + (centerPoint.x),
+			y = (diff * Math.cos(new_theta) - radiusEffect * Math.cos(new_theta * s))*scale + (centerPoint.y);
+
+		theta += Math.PI * 4 / steps;
+
+		if (oldX) {
+			ctx.strokeStyle = color;
+			ctx.lineWidth = width;
+			ctx.beginPath();
+			ctx.moveTo(oldX, oldY);
+			ctx.lineTo(x, y);
+			ctx.closePath();
+			ctx.stroke();
+		}
+
+		oldX = x;
+		oldY = y;
+	}
+};
+
+function scaled_between(v, min, max) {
+	return v*(max - min) + min;
+};
+
+/**
+ * Draws a rounded rectangle using the current state of the canvas. 
+ * If you omit the last three params, it will draw a rectangle 
+ * outline with a 5 pixel border radius 
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {Number} x The top left x coordinate
+ * @param {Number} y The top left y coordinate 
+ * @param {Number} width The width of the rectangle 
+ * @param {Number} height The height of the rectangle
+ * @param {Number} radius The corner radius. Defaults to 5;
+ * @param {Boolean} fill Whether to fill the rectangle. Defaults to false.
+ * @param {Boolean} stroke Whether to stroke the rectangle. Defaults to true.
+ */
+function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+  if (typeof stroke == "undefined" ) {
+    stroke = true;
+  }
+  if (typeof radius === "undefined") {
+    radius = 5;
+  }
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+  if (stroke) {
+    ctx.stroke();
+  }
+  if (fill) {
+    ctx.fill();
+  }        
+}
+
+
+// Quick & dirty random generator, just for qr code hide pattern
+var m_w = 123456789;
+var m_z = 987654321;
+var mask = 0xffffffff;
+
+// reinitialize random generator seed
+function seed(i) {
+    m_w = i;
+	m_z = 987654321;
+}
+
+// Returns number between 0 (inclusive) and 1.0 (exclusive),
+// just like Math.random().
+function random() {
+    m_z = (36969 * (m_z & 65535) + (m_z >> 16)) & mask;
+    m_w = (18000 * (m_w & 65535) + (m_w >> 16)) & mask;
+    var result = ((m_z << 16) + m_w) & mask;
+    result /= 4294967296;
+    return result + 0.5;
+}
+
+/** Draws the front side of paper wallet into the canvas.
+ * Draws a unique pattern based on the bitcoin address.
+ * @param {canvas} Canvas to draw to.
+ * @param {msg} The public bitcoin address.
+ */
+function draw(canvas, bitcoin_address) {
+	var ctx = canvas.getContext('2d');
+	var size = {w: canvas.width, h: canvas.height};
+	var cp = {x: 665, y: 389};
+
+	// draw background gradients
+	var grd = ctx.createLinearGradient(55, 82, 55, 807);
+	grd.addColorStop(0, "#fff57c");
+	grd.addColorStop(1, "#f7931a");
+	ctx.fillStyle = grd;
+	ctx.fillRect(55, 82, 958, 807);
+	
+	grd = ctx.createLinearGradient(55+958, 0, 55+958+1948, 0)
+	grd.addColorStop(0, "#8cd96f");
+	grd.addColorStop(1, "#fff67d");
+	ctx.fillStyle = grd;
+	ctx.fillRect(55+958, 82, 55+958+1948, 807);
+
+	// calculate unique parameters for pattern drawing.
+	var msg = Crypto.SHA256(bitcoin_address, {asBytes: true});
+	var majorR = scaled_between(float01(msg), 100, 200);
+
+	msg = Crypto.SHA256(msg, {asBytes: true});
+	var minorR = scaled_between(float01(msg), 0.1, 3);
+	
+	msg = Crypto.SHA256(msg, {asBytes: true});
+	var steps = scaled_between(float01(msg), 500, 10000);
+	var width = 3000/steps;
+	
+	msg = Crypto.SHA256(msg, {asBytes: true});
+	var radiusEffectConstant = scaled_between(float01(msg), majorR*0.9, majorR);
+	
+	var angleMultiplier = 2;
+	
+	// draw guilloche pattern based on the parameters
+	guilloche(canvas, {
+		color: "white",
+		centerPoint: cp,
+		angleMultiplier: angleMultiplier,
+		majorR: majorR,
+		minorR: minorR,
+		radiusEffectConstant: radiusEffectConstant,
+		scale: 9,
+		steps: steps,
+		
+		width: width,
+	});
+	
+	// draw white circle for bitcoin logo
+	w = 90;
+	ctx.arc(cp.x, cp.y, w/2+5, 0, 2*Math.PI, false);
+	ctx.fillStyle = "white";
+	ctx.fill();
+	
+	// draw bitcoin logo, minimized with https://tinypng.com/ and encoded with http://www.base64-image.de/
+	var img = new Image();
+	img.src =  "data:image/png;base64,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";
+	ctx.drawImage(img, cp.x-w/2, cp.y-w/2, w, w);
+	
+	img.src = "data:image/png;base64,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"
+	ctx.drawImage(img, cp.x+w/2+10, cp.y-20, 160, 43);
+	
+	// draw green pointer
+	ctx.beginPath();
+	ctx.moveTo(980, 82);
+	ctx.lineTo(1030, 82);
+	ctx.lineTo(1030, 355);
+	ctx.quadraticCurveTo(1030, 466, 1070, 486);
+	ctx.quadraticCurveTo(1030, 506, 1030, 617);
+	ctx.lineTo(1030, 889);
+	ctx.lineTo(980, 889);
+	ctx.closePath();
+	ctx.fillStyle = "#03ab5d";
+	ctx.shadowColor = "#555";
+	ctx.shadowBlur = 5;
+	ctx.shadowOffsetX = 5;
+	ctx.shadowOffsetY = 0;
+	ctx.fill();	
+	
+	ctx.shadowBlur = 0;
+	ctx.shadowOffsetX = 0;
+	ctx.shadowOffsetY = 0;
+	
+	// clear background & draw borders
+	ctx.beginPath();
+	ctx.moveTo(55, 82);
+	ctx.lineTo(1708, 82);
+	ctx.lineTo(1708, 182);
+	ctx.lineTo(2308, 182);
+	ctx.lineTo(2809, 90);
+	ctx.lineTo(2906, 182);
+	
+	ctx.lineTo(2906, 971-182);	
+	ctx.lineTo(2809, 971-90);
+	ctx.lineTo(2308, 971-182);
+	ctx.lineTo(1708, 971-182);
+	ctx.lineTo(1708, 971-82);
+	ctx.lineTo(55, 971-82);
+	
+	// surroundings,  move back
+	ctx.lineTo(0, 971);
+	ctx.lineTo(2962, 971);
+	ctx.lineTo(2962, 0);
+	ctx.lineTo(0, 0);
+	ctx.lineTo(0, 971);
+	ctx.lineTo(55, 971);
+	ctx.closePath();
+	ctx.lineWidth = 0.2;	
+	ctx.strokeStyle = "black";
+	ctx.stroke();	
+	ctx.fillStyle = "white";
+	ctx.fill();
+	
+	// draw empty rectangle for public QR code
+	ctx.fillStyle = "white";
+	roundRect(ctx, 118-5, 349-5, 300+10, 300+10, 20, "white");
+	
+	// white rectangle for blackout private QR code pattern
+	roundRect(ctx, 1708+216/2, 182+216/2, 384, 384, 20, "white");
+	
+	// private QR code background
+	roundRect(ctx, 1708+216/2+600, 182+216/2, 384, 384, 20, "white");
+	
+	// text
+	ctx.font = "25pt Calibri";
+	ctx.fillStyle = "#1937a9";
+	ctx.fillText("PUBLIC ADDRESS", 150, 332);
+	ctx.fillText("DEPOSIT / VERIFY", 150, 686);
+	
+	ctx.rotate(-Math.PI*2/4);
+	ctx.fillStyle = "#1937a9";
+	ctx.fillText("PRIVATE KEY", -570, 1708+216/2+600-20);
+	ctx.fillText("WALLET IMPORT FORMAT", -662, 1708+216/2+600-20+448);
+	
+	// text for green pointer
+	ctx.fillStyle = "white";
+	ctx.fillText("PRIVATE KEY  /  WITHDRAW", -670, 1015);
+	ctx.rotate(Math.PI*2/4);
+	
+	ctx.fillStyle = "black";
+	ctx.font = "10pt Courier";
+
+	// create random text to black out private key pattern
+	var iters = 20;
+	var f_last = 0;
+	var possible = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	seed(1234);
+	for (var i=0; i<4000; ++i) {
+		var f1 = random()
+		var f2 = random();
+		var txt = possible[Math.floor(random()*possible.length)];
+		ctx.fillText(txt, 1824 + f2*360, 310 + 350*f1);
+	}
+}
+
+// treats the first 4 bytes as an integer value, and scales it to [0, 1[.
+function float01(bytearray) {
+	var v = bytearray[0] << 24;
+	v |= bytearray[1] << 16;
+	v |= bytearray[2] << 8;
+	v |= bytearray[3];
+	
+	v &= 0xffffffff;
+	v /= 4294967296;
+		
+	// since v is signed, just add 0.5 to remap to [0, 1[.
+	return v + 0.5;
+}
+
+// Creates an image based on the given public key.
+function front_img(bitcoin_public_key) {
+	var canvas = document.createElement('canvas');
+	canvas.width = 2962;
+	canvas.height = 971;
+	
+	if (bitcoin_public_key) {
+		draw(canvas, bitcoin_public_key);
+		return canvas.toDataURL();
+	}
+	
+	return 0;	
+}
+
+// helper function to update an image with the given id
+function update_img(id, txt) {
+	var img = front_img(txt);
+	if (img) {
+		document.getElementById(id).src = img;
+	}
+}
+	</script>	
 
 	<script type="text/javascript">
 // Array.prototype.map function is in the public domain.
@@ -7466,6 +7782,9 @@ Bitcoin.Util = {
 				document.getElementById("dupbtcaddress" + idPostFix).innerHTML = bitcoinAddress;
 				document.getElementById("btcprivwif" + idPostFix).innerHTML = privateKeyWif;
 				document.getElementById("dupbtcprivwif" + idPostFix).innerHTML = privateKeyWif;
+				
+				// draw image with custom pattern
+				document.getElementById("papersvg1").src = front_img(bitcoinAddress);			
 
 				// CODE to modify SVG DOM elements
 				//var paperSvg = document.getElementById("papersvg" + idPostFix);
