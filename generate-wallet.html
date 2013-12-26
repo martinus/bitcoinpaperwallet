@@ -345,11 +345,11 @@ function draw(canvas, bitcoin_address) {
 	var iters = 20;
 	var f_last = 0;
 	var possible = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	seed(1234);
+	//seed(1234);
 	for (var i=0; i<4000; ++i) {
 		var f1 = random()
 		var f2 = random();
-		var txt = possible[Math.floor(random()*possible.length)];
+		var txt = possible[Math.floor(Math.random()*possible.length)];
 		ctx.fillText(txt, 1824 + f2*360, 310 + 350*f1);
 	}
 }
