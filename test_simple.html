@@ -457,9 +457,75 @@ if (typeof WalletDraw == "undefined") {
 				if (fill) {
 					ctx.fill();
 				}        
-			}		
+			},
+			
+			/**
+			 * Draw text with strong blur around it.
+			 * This is quite a hack, but I couldn't find a better way.
+			 */
+			fillTextStrongBlur: function(ctx, msg, x, y, offset) {
+				ctx.save();
+				
+				ctx.shadowColor = "#fff";
+				ctx.shadowBlur = 7;
+				ctx.shadowOffsetX = 4;
+				ctx.shadowOffsetY = 4;
+				
+				// run multiple times for stronger blur
+				for (var i=0; i<1; ++i) {
+					ctx.shadowOffsetX = offset;
+					ctx.shadowOffsetY = offset;
+					ctx.fillText(msg, x, y);
+					
+					ctx.shadowOffsetX = -offset;
+					ctx.shadowOffsetY = offset;
+					ctx.fillText(msg, x, y);
+					
+					ctx.shadowOffsetX = offset;
+					ctx.shadowOffsetY = -offset;
+					ctx.fillText(msg, x, y);
+					
+					ctx.shadowOffsetX = -offset;
+					ctx.shadowOffsetY = -offset;
+					ctx.fillText(msg, x, y);
+				}
+				
+				ctx.restore();
+			},			
 		};
 		
+		var draw = WalletDraw.draw = {
+			text: function(ctx, opts) {
+				var opts = opts || {};
+				var txtPublicAddres = opts.txtPublicAddres || "PUBLIC ADDRESS";
+				var txtDepositVerify = opts.txtDepositVerify || "DEPOSIT / VERIFY";
+				var txtPrivateKey = opts.txtPrivateKey || "PRIVATE KEY";
+				var txtWalletImportFormat = opts.txtWalletImportFormat || "WALLET IMPORT FORMAT";
+				var txtWithdraw = opts.txtWithdraw || "PRIVATE KEY  /  WITHDRAW";
+				
+				ctx.save();
+				
+				ctx.font = "bold 25pt Calibri";	
+				ctx.textAlign = 'center';	
+				ctx.fillStyle = "#1937a9";
+								
+				utils.fillTextStrongBlur(ctx, txtPublicAddres, 268, 320, 4);
+				utils.fillTextStrongBlur(ctx, txtDepositVerify, 268, 696, 4);
+
+				
+				ctx.rotate(-Math.PI*2/4);
+				ctx.fillStyle = "#1937a9";
+				utils.fillTextStrongBlur(ctx, txtPrivateKey, -482, 2396, 4);
+				utils.fillTextStrongBlur(ctx, txtWalletImportFormat, -482, 1708+216/2+600-20+448, 4);
+				
+				
+				// text for green pointer
+				ctx.fillStyle = "white";
+				ctx.fillText(txtWithdraw, -482, 1015);
+				
+				ctx.restore();
+			},
+		};
 	})();
 }
 	</script>
@@ -568,58 +634,13 @@ function draw(canvas, bitcoin_address) {
 	// private QR code background
 	WalletDraw.utils.roundRect(ctx, 2416, 290, 384, 384, 20, "white");
 	
-	// text
-	ctx.font = "25pt Calibri";
-	
-	ctx.textAlign = 'center';
-	
-	ctx.fillStyle = "#1937a9";
-	
-	/**
-	 * Draw text with strong blur around it.
-	 * This is quite a hack, but I couldn't find a better way.
-	 */
-	function fillTextStrongBlur(ctx, msg, x, y, offset) {
-		ctx.save();
-		ctx.shadowColor = "#fff";
-		ctx.shadowBlur = 7;
-		ctx.shadowOffsetX = 4;
-		ctx.shadowOffsetY = 4;
-		// run multiple times for stronger blur
-		for (var i=0; i<1; ++i) {
-			ctx.shadowOffsetX = offset;
-			ctx.shadowOffsetY = offset;
-			ctx.fillText(msg, x, y);
-			
-			ctx.shadowOffsetX = -offset;
-			ctx.shadowOffsetY = offset;
-			ctx.fillText(msg, x, y);
-			
-			ctx.shadowOffsetX = offset;
-			ctx.shadowOffsetY = -offset;
-			ctx.fillText(msg, x, y);
-			
-			ctx.shadowOffsetX = -offset;
-			ctx.shadowOffsetY = -offset;
-			ctx.fillText(msg, x, y);
-		}
-		ctx.restore();
-	};
-	
-	fillTextStrongBlur(ctx, "PUBLIC ADDRESS", 268, 320, 4);
-	fillTextStrongBlur(ctx, "DEPOSIT / VERIFY", 268, 696, 4);
-
-	
-	ctx.rotate(-Math.PI*2/4);
-	ctx.fillStyle = "#1937a9";
-	fillTextStrongBlur(ctx, "PRIVATE KEY", -482, 2396, 4);
-	fillTextStrongBlur(ctx, "WALLET IMPORT FORMAT", -482, 1708+216/2+600-20+448, 4);
-	
-	
-	// text for green pointer
-	ctx.fillStyle = "white";
-	ctx.fillText("PRIVATE KEY  /  WITHDRAW", -482, 1015);
-	ctx.rotate(Math.PI*2/4);
+	WalletDraw.draw.text(ctx, {
+		txtPublicAddres: "PUBLIC ADDRESS",
+		txtDepositVerify: "DEPOSIT / VERIFY",
+		txtPrivateKey: "PRIVATE KEY",
+		txtWalletImportFormat: "WALLET IMPORT FORMAT",
+		txtWithdraw: "PRIVATE KEY  /  WITHDRAW",
+		});
 	
 	ctx.fillStyle = "black";
 	ctx.font = "10pt Courier";
@@ -628,11 +649,11 @@ function draw(canvas, bitcoin_address) {
 	var iters = 20;
 	var f_last = 0;
 	var possible = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	for (var i=0; i<4000; ++i) {
+	for (var i=0; i<6000; ++i) {
 		var f1 = Math.random();
 		var f2 = Math.random();
 		var txt = possible[Math.floor(Math.random()*possible.length)];
-		ctx.fillText(txt, 1824 + f2*360, 310 + 350*f1);
+		ctx.fillText(txt, 1827 + f2*360, 310 + 350*f1);
 	}
 }
 
