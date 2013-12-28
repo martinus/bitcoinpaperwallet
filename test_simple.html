@@ -423,6 +423,9 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 					 * Draws a rounded rectangle using the current state of the canvas. 
 					 * If you omit the last three params, it will draw a rectangle 
 					 * outline with a 5 pixel border radius 
+					 *
+					 * Source: http://stackoverflow.com/a/3368118
+					 *
 					 * @param {CanvasRenderingContext2D} ctx
 					 * @param {Number} x The top left x coordinate
 					 * @param {Number} y The top left y coordinate 
@@ -467,10 +470,10 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 					 * Draw text with strong blur around it.
 					 * This is quite a hack, but I couldn't find a better way.
 					 */
-					fillTextStrongBlur: function(ctx, msg, x, y, offset) {
+					fillTextStrongBlur: function(ctx, msg, x, y, offset, opts) {
 						ctx.save();
 						
-						ctx.shadowColor = "#fff";
+						ctx.shadowColor = opts.colorTextShadow;
 						ctx.shadowBlur = 7;
 						ctx.shadowOffsetX = 4;
 						ctx.shadowOffsetY = 4;
@@ -498,32 +501,22 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 					},			
 					
 					text: function(ctx, opts) {
-						var opts = opts || {};
-						var txtPublicAddres = opts.txtPublicAddres || "PUBLIC ADDRESS";
-						var txtDepositVerify = opts.txtDepositVerify || "DEPOSIT / VERIFY";
-						var txtPrivateKey = opts.txtPrivateKey || "PRIVATE KEY";
-						var txtWalletImportFormat = opts.txtWalletImportFormat || "WALLET IMPORT FORMAT";
-						var txtWithdraw = opts.txtWithdraw || "PRIVATE KEY  /  WITHDRAW";
-						
 						ctx.save();
 						
-						ctx.font = "bold 22pt sans-serif";	
+						ctx.font = opts.font;
 						ctx.textAlign = "center";
-						ctx.fillStyle = "#1937a9";
-										
-						draw.fillTextStrongBlur(ctx, txtPublicAddres, 268, 320, 4);
-						draw.fillTextStrongBlur(ctx, txtDepositVerify, 268, 696, 4);
-
+						ctx.fillStyle = opts.colorText;
+						draw.fillTextStrongBlur(ctx, opts.txtPublicAddress, 268, 320, 4, opts);
+						draw.fillTextStrongBlur(ctx, opts.txtDepositVerify, 268, 696, 4, opts);
 						
 						ctx.rotate(-Math.PI*2/4);
-						ctx.fillStyle = "#1937a9";
-						draw.fillTextStrongBlur(ctx, txtPrivateKey, -482, 2396, 4);
-						draw.fillTextStrongBlur(ctx, txtWalletImportFormat, -482, 1708+216/2+600-20+448, 4);
+						draw.fillTextStrongBlur(ctx, opts.txtPrivateKey, -482, 2396, 4, opts);
+						draw.fillTextStrongBlur(ctx, opts.txtWalletImportFormat, -482, 2844, 4, opts);
 						
 						
 						// text for green pointer
-						ctx.fillStyle = "white";
-						ctx.fillText(txtWithdraw, -482, 1015);
+						ctx.fillStyle = opts.colorTextPointer;
+						ctx.fillText(opts.txtWithdraw, -482, 1015);
 						
 						ctx.restore();
 					},
@@ -647,7 +640,7 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						
 						// draw guilloche
 						guillocheParams = PaperWallet.draw.guillocheParams(key);
-						guillocheParams.color = "white";
+						guillocheParams.color = opts.colorGuilloche;
 						guillocheParams.centerPoint = cp;
 						PaperWallet.draw.guilloche(ctx,  guillocheParams);
 						
@@ -684,8 +677,16 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 			colorPublicLower: "#f7931a",
 			colorPrivateLeft: "#8cd96f",			
 			colorPrivateRight: "#fff67d",
-			colorPointer: "#03ab5d",						
-			txtPublicAddres: "公共广播",			
+			colorPointer: "#03ab5d",
+			colorGuilloche: "white",
+
+			font: "bold 22pt sans-serif",
+			
+			colorText: "#1937a9",
+			colorTextShadow: "white",
+			colorTextPointer: "white",
+			
+			txtPublicAddress: "公共广播",
 			txtDepositVerify: "ZÁLOHA / OVĚŘENÍ",
 			txtPrivateKey: "PRIVATER SCHLÜSSEL",
 			txtWalletImportFormat: "КОШЕЛЕК ИМПОРТ ФОРМАТ",
