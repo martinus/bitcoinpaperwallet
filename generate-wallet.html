@@ -289,17 +289,17 @@
 						ctx.font = opts.font;
 						ctx.textAlign = "center";
 						ctx.fillStyle = opts.colorText;
-						draw.fillTextStrongBlur(ctx, opts.txtPublicAddress, 268, 320, 4, opts);
-						draw.fillTextStrongBlur(ctx, opts.txtDepositVerify, 268, 696, 4, opts);
+						draw.fillTextStrongBlur(ctx, opts.text.publicAddress, 268, 320, 4, opts);
+						draw.fillTextStrongBlur(ctx, opts.text.depositVerify, 268, 696, 4, opts);
 						
 						ctx.rotate(-Math.PI*2/4);
-						draw.fillTextStrongBlur(ctx, opts.txtPrivateKey, -482, 2396, 4, opts);
-						draw.fillTextStrongBlur(ctx, opts.txtWalletImportFormat, -482, 2844, 4, opts);
+						draw.fillTextStrongBlur(ctx, opts.text.privateKey, -482, 2396, 4, opts);
+						draw.fillTextStrongBlur(ctx, opts.text.walletImportFormat, -482, 2844, 4, opts);
 						
 						
 						// text for green pointer
 						ctx.fillStyle = opts.colorTextPointer;
-						ctx.fillText(opts.txtWithdraw, -482, 1015);
+						ctx.fillText(opts.text.withdraw, -482, 1015);
 						
 						ctx.restore();
 					},
@@ -7847,27 +7847,7 @@ Bitcoin.Util = {
 				document.getElementById("btcprivwif" + idPostFix).innerHTML = privateKeyWif;
 				document.getElementById("dupbtcprivwif" + idPostFix).innerHTML = privateKeyWif;
 				
-				var drawOpts = {
-					colorPublicUpper: "#fff57c",
-					colorPublicLower: "#f7931a",
-					colorPrivateLeft: "#8cd96f",			
-					colorPrivateRight: "#fff67d",
-					colorPointer: "#03ab5d",
-					colorGuilloche: "white",
-
-					font: "bold 22pt sans-serif",
-					
-					colorText: "#1937a9",
-					colorTextShadow: "white",
-					colorTextPointer: "white",
-					
-					txtPublicAddress: "PUBLIC ADDRESS",
-					txtDepositVerify: "DEPOSIT / VERIFY",
-					txtPrivateKey: "PRIVAT KEY",
-					txtWalletImportFormat: "WALLET IMPORT FORMAT",
-					txtWithdraw: "PRIVATE KEY  /  WITHDRAW",
-				};
-
+				// FIXME: drawOpts is a global variable. Ugly.
 				document.getElementById("papersvg1").src = PaperWallet.draw.frontImage(bitcoinAddress, drawOpts);
 
 				// CODE to modify SVG DOM elements
@@ -8356,10 +8336,36 @@ Bitcoin.Util = {
 	</script>
 
 	<script type="text/javascript">
+		
 	
 		/********************************************************
 		 Brand new JS functions added for bitcoinpaperwallet.com
 		 ********************************************************/
+
+		// options for drawing. text will be replaced in setDesign by correct translation.
+		var drawOpts = {
+			colorPublicUpper: "#fff57c",
+			colorPublicLower: "#f7931a",
+			colorPrivateLeft: "#8cd96f",			
+			colorPrivateRight: "#fff67d",
+			colorPointer: "#03ab5d",
+			colorGuilloche: "white",
+
+			font: "bold 22pt sans-serif",
+			
+			colorText: "#1937a9",
+			colorTextShadow: "white",
+			colorTextPointer: "white",
+			
+			text: {
+				publicAddress: "公共广播",
+				depositVerify: "ZÁLOHA / OVĚŘENÍ",
+				privateKey: "PRIVATER SCHLÜSSEL",
+				walletImportFormat: "КОШЕЛЕК ИМПОРТ ФОРМАТ",
+				withdraw: "PRIVATE KEY  /  WITHDRAW",
+			},
+		};
+		 
 	
     	var inlineMediaStyle = null;
 
@@ -8464,6 +8470,26 @@ Bitcoin.Util = {
 		}
 
 	function setDesign (whichDesign) {
+		var translations = {
+			german: {
+				publicAddress: "Öffentliche Adresse",
+				depositVerify: "Einzahlen / Bestätigen",
+				privateKey: "Privater Schlüssel",
+				walletImportFormat: "Brieftaschen Importformat",
+				withdraw: "Privater Schlüssel  /  Abheben",
+			},
+			"default": {
+				publicAddress: "PUBLIC ADDRESS",
+				depositVerify: "DEPOSIT / VERIFY",
+				privateKey: "PRIVATE KEY",
+				walletImportFormat: "WALLET IMPORT FORMAT",
+				withdraw: "PRIVATE KEY / WITHDRAW",
+			}
+		};
+		
+		drawOpts.text = translations[whichDesign] || translations["default"];
+	
+	
 		if (!whichDesign) whichDesign = 'default';
 		if (whichDesign == 'default') {
 			var myFront = './images/front-300dpi.jpg';
