@@ -301,12 +301,11 @@ if (typeof WalletDraw == "undefined") {
 			 * Draw guilloche pattern with the given parameters into the canvas.
 			 * Source: https://gist.github.com/3n/803329
 			 */
-			draw: function(canvas, opts) {
+			draw: function(ctx, opts) {
+				ctx.save();
+				
 				var opts = opts || {};
-				var ctx = canvas.getContext('2d'),
-					scale = opts.scale || 1
-					size = {x: canvas.offsetWidth, y: canvas.offsetHeight},
-					halfSize = {x: size.x / 2, y: size.y / 2},
+				var scale = opts.scale || 1,
 					majorR = opts.majorR || 49,
 					minorR = opts.minorR || 20.4324,
 					angleMultiplier = opts.angleMultiplier || 1,
@@ -345,6 +344,8 @@ if (typeof WalletDraw == "undefined") {
 					oldX = x;
 					oldY = y;
 				}
+				
+				ctx.restore();
 			},
 			
 			/**
@@ -433,30 +434,34 @@ if (typeof WalletDraw == "undefined") {
 			 * @param {Boolean} fill Whether to fill the rectangle. Defaults to false.
 			 * @param {Boolean} stroke Whether to stroke the rectangle. Defaults to true.
 			 */
-			roundRect: function(ctx, x, y, width, height, radius, fill, stroke) {
-				if (typeof stroke == "undefined" ) {
-					stroke = true;
-				}
-				if (typeof radius === "undefined") {
-					radius = 5;
-				}
+			roundRect: function(ctx, x, y, w, h, opts) {
+				ctx.save();
+				
 				ctx.beginPath();
-				ctx.moveTo(x + radius, y);
-				ctx.lineTo(x + width - radius, y);
-				ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-				ctx.lineTo(x + width, y + height - radius);
-				ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-				ctx.lineTo(x + radius, y + height);
-				ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-				ctx.lineTo(x, y + radius);
-				ctx.quadraticCurveTo(x, y, x + radius, y);
+				ctx.moveTo(x + opts.radius, y);
+				ctx.lineTo(x + w - opts.radius, y);
+				ctx.quadraticCurveTo(x + w, y, x + w, y + opts.radius);
+				ctx.lineTo(x + w, y + h - opts.radius);
+				ctx.quadraticCurveTo(x + w, y + h, x + w - opts.radius, y + h);
+				ctx.lineTo(x + opts.radius, y + h);
+				ctx.quadraticCurveTo(x, y + h, x, y + h - opts.radius);
+				ctx.lineTo(x, y + opts.radius);
+				ctx.quadraticCurveTo(x, y, x + opts.radius, y);
 				ctx.closePath();
-				if (stroke) {
+
+				if (typeof opts.lineWidth != "undefined") {
+					ctx.lineWidth = opts.lineWidth;
+				}
+				if (typeof opts.strokeStyle != "undefined") {
+					ctx.strokeStyle = opts.strokeStyle;
 					ctx.stroke();
 				}
-				if (fill) {
+				if (typeof opts.fillStyle != "undefined") {
+					ctx.fillStyle = opts.fillStyle;
 					ctx.fill();
-				}        
+				}
+				
+				ctx.restore();
 			},
 			
 			/**
@@ -542,6 +547,8 @@ if (typeof WalletDraw == "undefined") {
 			},
 			
 			gradients: function(ctx, opts) {
+				ctx.save();
+				
 				// draw background gradients
 				var grd = ctx.createLinearGradient(55, 82, 55, 807);
 				grd.addColorStop(0, opts.colorPublicLower);
@@ -554,6 +561,7 @@ if (typeof WalletDraw == "undefined") {
 				grd.addColorStop(1, opts.colorPrivateLeft);
 				ctx.fillStyle = grd;
 				ctx.fillRect(1013, 82, 2961, 807);
+				ctx.restore();
 			},
 			
 			logos: function(ctx, cp) {
@@ -615,108 +623,95 @@ if (typeof WalletDraw == "undefined") {
 				ctx.lineTo(0, 971);
 				ctx.lineTo(55, 971);
 				ctx.closePath();
+				
 				ctx.lineWidth = 0.2;	
 				ctx.strokeStyle = "black";
-				ctx.stroke();	
 				ctx.fillStyle = "white";
+				
+				ctx.stroke();	
 				ctx.fill();
 				
 				ctx.restore();
+			},
+			
+			// Creates an image based on the given public key.
+			frontImage: function(key, opts) {
+				// create the temporary draw canvas
+				var canvas = document.createElement('canvas');
+				canvas.width = 2962;
+				canvas.height = 971;
+				
+				var key = key || "";
+				
+				var ctx = canvas.getContext('2d');
+				var cp = {x: 665, y: 389};
+				
+				WalletDraw.draw.gradients(ctx, opts);
+				
+				// draw guilloche
+				params = WalletDraw.guilloche.params(key);
+				params.color = "white";
+				params.centerPoint = cp;
+				WalletDraw.guilloche.draw(ctx,  params);
+				
+				WalletDraw.draw.logos(ctx, cp);
+				WalletDraw.draw.pointer(ctx, opts.colorPointer);
+				
+				WalletDraw.draw.clearSurroundings(ctx);
+				
+				// draw empty rectangle for public QR code
+				var qrOpts = {
+					lineWidth: 0.2,
+					strokeStyle: "black",
+					fillStyle: "white",
+					radius: 20,
+				};
+				
+				WalletDraw.utils.roundRect(ctx, 113, 344, 310, 310, qrOpts);
+				WalletDraw.utils.roundRect(ctx, 1816, 290, 384, 384, qrOpts);
+				WalletDraw.utils.roundRect(ctx, 2416, 290, 384, 384, qrOpts);
+				
+				WalletDraw.draw.text(ctx, opts);
+				
+				WalletDraw.draw.obfuscation(ctx, 1831, 310, 350, 350);
+
+				return canvas.toDataURL();
 			}
 		};
 	})();
 }
 	</script>
-
-	<script type="text/javascript">
-
-
-
-
-/** 
- * Draws the front side of paper wallet into the canvas.
- * @param {canvas} Canvas to draw to.
- * @param {bitcoin_address} The public bitcoin address to create the pattern from, or any text.
- */
-function draw(canvas, bitcoin_address) {	
-	var ctx = canvas.getContext('2d');
-	var cp = {x: 665, y: 389};
-	
-	WalletDraw.draw.gradients(ctx, {
-		colorPublicUpper: "#f7931a",
-		colorPublicLower: "#fff57c",
-		colorPrivateLeft: "#fff67d",
-		colorPrivateRight: "#8cd96f",
-	});
-	
-	// draw guilloche
-	params = WalletDraw.guilloche.params(bitcoin_address);
-	params.color = "white";
-	params.centerPoint = cp;
-	WalletDraw.guilloche.draw(canvas,  params);
-	
-	WalletDraw.draw.logos(ctx, cp);
-	WalletDraw.draw.pointer(ctx, "#03ab5d");
-	
-	WalletDraw.draw.clearSurroundings(ctx);
-	
-	// draw empty rectangle for public QR code
-	ctx.fillStyle = "white";
-	WalletDraw.utils.roundRect(ctx, 113, 344, 310, 310, 20, "white");
-	WalletDraw.utils.roundRect(ctx, 1816, 290, 384, 384, 20, "white");
-	WalletDraw.utils.roundRect(ctx, 2416, 290, 384, 384, 20, "white");
-	
-	WalletDraw.draw.text(ctx, {
-		txtPublicAddres: "公共广播",
-		txtDepositVerify: "ZÁLOHA / OVĚŘENÍ",
-		txtPrivateKey: "PRIVATER SCHLÜSSEL",
-		txtWalletImportFormat: "КОШЕЛЕК ИМПОРТ ФОРМАТ",
-		txtWithdraw: "PRIVATE KEY  /  WITHDRAW",
-		});
-	
-	WalletDraw.draw.obfuscation(ctx, 1831, 310, 350, 350);
-}
-
-// Creates an image based on the given public key.
-function front_img(bitcoin_public_key) {
-	var canvas = document.createElement('canvas');
-	canvas.width = 2962;
-	canvas.height = 971;
-	
-	if (bitcoin_public_key) {
-		draw(canvas, bitcoin_public_key);
-		return canvas.toDataURL();
-	}
-	
-	return 0;	
-}
-
-// helper function to update an image with the given id
-function update_img(id, txt) {
-	var img = front_img(txt);
-	if (img) {
-		document.getElementById(id).src = img;
-	}
-}
+	<script>
+		var drawOpts = {
+			colorPublicUpper: "#f7931a",
+			colorPublicLower: "#fff57c",
+			colorPrivateLeft: "#fff67d",
+			colorPrivateRight: "#8cd96f",			
+			colorPointer: "#03ab5d",						
+			txtPublicAddres: "公共广播",			
+			txtDepositVerify: "ZÁLOHA / OVĚŘENÍ",
+			txtPrivateKey: "PRIVATER SCHLÜSSEL",
+			txtWalletImportFormat: "КОШЕЛЕК ИМПОРТ ФОРМАТ",
+			txtWithdraw: "PRIVATE KEY  /  WITHDRAW",
+		};
 	</script>
-
 	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
 </head>
 <body>
 	<form id="frm">
 		Public Key: <input type="text" name="pubkey" value="topfen">
-		<a href="#" onclick="update_img('canvasImg', frm.pubkey.value)">Go</a>
+		<a href="#" onclick="document.getElementById('canvasImg').src = WalletDraw.draw.frontImage(frm.pubkey.value, drawOpts);">Go</a>
 	</form>
 	<img id="canvasImg" alt="right click to save">
 	
 	<script>
-		// create random text
+		// create random text, just for test
 		var possible = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 		frm.pubkey.value = "";
 		for (var i=0; i<10; ++i) {
 			frm.pubkey.value += possible[Math.floor(Math.random()*possible.length)];
 		}
-		update_img('canvasImg', frm.pubkey.value);
+		document.getElementById('canvasImg').src = WalletDraw.draw.frontImage(frm.pubkey.value, drawOpts);
 	</script>
 </body>
 </html>
