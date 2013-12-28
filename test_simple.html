@@ -539,6 +539,89 @@ if (typeof WalletDraw == "undefined") {
 					ctx.fillText(letter, x + Math.random()*w, y + Math.random()*h);
 				}
 				ctx.restore();
+			},
+			
+			gradients: function(ctx, opts) {
+				// draw background gradients
+				var grd = ctx.createLinearGradient(55, 82, 55, 807);
+				grd.addColorStop(0, opts.colorPublicLower);
+				grd.addColorStop(1, opts.colorPublicUpper);
+				ctx.fillStyle = grd;
+				ctx.fillRect(55, 82, 958, 807);
+				
+				grd = ctx.createLinearGradient(1013, 0, 2961, 0)
+				grd.addColorStop(0, opts.colorPrivateRight);
+				grd.addColorStop(1, opts.colorPrivateLeft);
+				ctx.fillStyle = grd;
+				ctx.fillRect(1013, 82, 2961, 807);
+			},
+			
+			logos: function(ctx, cp) {
+				var w = 90;
+				
+				// draw circle for bitcoin logo
+				ctx.arc(cp.x, cp.y, w/2+5, 0, 2*Math.PI, false);
+				ctx.fillStyle = "white";
+				ctx.fill();
+
+				// logo & text
+				ctx.drawImage(WalletDraw.img.bitcoin_logo, cp.x-w/2, cp.y-w/2, w, w);
+				ctx.drawImage(WalletDraw.img.bitcoin_text, cp.x+w/2+10, cp.y-20, 160, 43);
+			},
+
+			pointer: function(ctx, colorPointer) {
+				ctx.save();
+				ctx.beginPath();
+				ctx.moveTo(980, 82);
+				ctx.lineTo(1030, 82);
+				ctx.lineTo(1030, 355);
+				ctx.quadraticCurveTo(1030, 466, 1070, 486);
+				ctx.quadraticCurveTo(1030, 506, 1030, 617);
+				ctx.lineTo(1030, 889);
+				ctx.lineTo(980, 889);
+				ctx.closePath();
+				ctx.fillStyle = colorPointer;
+				ctx.shadowColor = "#555";
+				ctx.shadowBlur = 5;
+				ctx.shadowOffsetX = 5;
+				ctx.shadowOffsetY = 0;
+				ctx.fill();
+				ctx.restore();		
+			},
+
+			clearSurroundings: function(ctx) {
+				ctx.save();
+				
+				ctx.beginPath();
+				ctx.moveTo(55, 82);
+				ctx.lineTo(1708, 82);
+				ctx.lineTo(1708, 182);
+				ctx.lineTo(2308, 182);
+				ctx.lineTo(2809, 90);
+				ctx.lineTo(2906, 182);
+				
+				ctx.lineTo(2906, 971-182);	
+				ctx.lineTo(2809, 971-90);
+				ctx.lineTo(2308, 971-182);
+				ctx.lineTo(1708, 971-182);
+				ctx.lineTo(1708, 971-82);
+				ctx.lineTo(55, 971-82);
+				
+				// surroundings,  move back
+				ctx.lineTo(0, 971);
+				ctx.lineTo(2962, 971);
+				ctx.lineTo(2962, 0);
+				ctx.lineTo(0, 0);
+				ctx.lineTo(0, 971);
+				ctx.lineTo(55, 971);
+				ctx.closePath();
+				ctx.lineWidth = 0.2;	
+				ctx.strokeStyle = "black";
+				ctx.stroke();	
+				ctx.fillStyle = "white";
+				ctx.fill();
+				
+				ctx.restore();
 			}
 		};
 	})();
@@ -558,19 +641,13 @@ if (typeof WalletDraw == "undefined") {
 function draw(canvas, bitcoin_address) {	
 	var ctx = canvas.getContext('2d');
 	var cp = {x: 665, y: 389};
-
-	// draw background gradients
-	var grd = ctx.createLinearGradient(55, 82, 55, 807);
-	grd.addColorStop(0, "#fff57c");
-	grd.addColorStop(1, "#f7931a");
-	ctx.fillStyle = grd;
-	ctx.fillRect(55, 82, 958, 807);
 	
-	grd = ctx.createLinearGradient(55+958, 0, 55+958+1948, 0)
-	grd.addColorStop(0, "#8cd96f");
-	grd.addColorStop(1, "#fff67d");
-	ctx.fillStyle = grd;
-	ctx.fillRect(55+958, 82, 55+958+1948, 807);
+	WalletDraw.draw.gradients(ctx, {
+		colorPublicUpper: "#f7931a",
+		colorPublicLower: "#fff57c",
+		colorPrivateLeft: "#fff67d",
+		colorPrivateRight: "#8cd96f",
+	});
 	
 	// draw guilloche
 	params = WalletDraw.guilloche.params(bitcoin_address);
@@ -578,66 +655,10 @@ function draw(canvas, bitcoin_address) {
 	params.centerPoint = cp;
 	WalletDraw.guilloche.draw(canvas,  params);
 	
-	// draw white circle for bitcoin logo
-	w = 90;
-	ctx.arc(cp.x, cp.y, w/2+5, 0, 2*Math.PI, false);
-	ctx.fillStyle = "white";
-	ctx.fill();
+	WalletDraw.draw.logos(ctx, cp);
+	WalletDraw.draw.pointer(ctx, "#03ab5d");
 	
-	// logo & text
-	ctx.drawImage(WalletDraw.img.bitcoin_logo, cp.x-w/2, cp.y-w/2, w, w);
-	ctx.drawImage(WalletDraw.img.bitcoin_text, cp.x+w/2+10, cp.y-20, 160, 43);
-	
-	// draw green pointer
-	ctx.beginPath();
-	ctx.moveTo(980, 82);
-	ctx.lineTo(1030, 82);
-	ctx.lineTo(1030, 355);
-	ctx.quadraticCurveTo(1030, 466, 1070, 486);
-	ctx.quadraticCurveTo(1030, 506, 1030, 617);
-	ctx.lineTo(1030, 889);
-	ctx.lineTo(980, 889);
-	ctx.closePath();
-	ctx.fillStyle = "#03ab5d";
-	ctx.shadowColor = "#555";
-	ctx.shadowBlur = 5;
-	ctx.shadowOffsetX = 5;
-	ctx.shadowOffsetY = 0;
-	ctx.fill();	
-	
-	ctx.shadowBlur = 0;
-	ctx.shadowOffsetX = 0;
-	ctx.shadowOffsetY = 0;
-	
-	// clear background & draw borders
-	ctx.beginPath();
-	ctx.moveTo(55, 82);
-	ctx.lineTo(1708, 82);
-	ctx.lineTo(1708, 182);
-	ctx.lineTo(2308, 182);
-	ctx.lineTo(2809, 90);
-	ctx.lineTo(2906, 182);
-	
-	ctx.lineTo(2906, 971-182);	
-	ctx.lineTo(2809, 971-90);
-	ctx.lineTo(2308, 971-182);
-	ctx.lineTo(1708, 971-182);
-	ctx.lineTo(1708, 971-82);
-	ctx.lineTo(55, 971-82);
-	
-	// surroundings,  move back
-	ctx.lineTo(0, 971);
-	ctx.lineTo(2962, 971);
-	ctx.lineTo(2962, 0);
-	ctx.lineTo(0, 0);
-	ctx.lineTo(0, 971);
-	ctx.lineTo(55, 971);
-	ctx.closePath();
-	ctx.lineWidth = 0.2;	
-	ctx.strokeStyle = "black";
-	ctx.stroke();	
-	ctx.fillStyle = "white";
-	ctx.fill();
+	WalletDraw.draw.clearSurroundings(ctx);
 	
 	// draw empty rectangle for public QR code
 	ctx.fillStyle = "white";
