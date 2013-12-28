@@ -530,7 +530,7 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						// create random text to black out private key pattern
 						var possible_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 						for (var i=0; i<6000; ++i) {
-							var letter = possible_letters[Math.floor(Math.random()*possible.length)];
+							var letter = possible_letters[Math.floor(Math.random()*possible_letters.length)];
 							ctx.fillText(letter, x + Math.random()*w, y + Math.random()*h);
 						}
 						ctx.restore();
