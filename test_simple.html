@@ -506,17 +506,17 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						ctx.font = opts.font;
 						ctx.textAlign = "center";
 						ctx.fillStyle = opts.colorText;
-						draw.fillTextStrongBlur(ctx, opts.txtPublicAddress, 268, 320, 4, opts);
-						draw.fillTextStrongBlur(ctx, opts.txtDepositVerify, 268, 696, 4, opts);
+						draw.fillTextStrongBlur(ctx, opts.text.publicAddress, 268, 320, 4, opts);
+						draw.fillTextStrongBlur(ctx, opts.text.depositVerify, 268, 696, 4, opts);
 						
 						ctx.rotate(-Math.PI*2/4);
-						draw.fillTextStrongBlur(ctx, opts.txtPrivateKey, -482, 2396, 4, opts);
-						draw.fillTextStrongBlur(ctx, opts.txtWalletImportFormat, -482, 2844, 4, opts);
+						draw.fillTextStrongBlur(ctx, opts.text.privateKey, -482, 2396, 4, opts);
+						draw.fillTextStrongBlur(ctx, opts.text.walletImportFormat, -482, 2844, 4, opts);
 						
 						
 						// text for green pointer
 						ctx.fillStyle = opts.colorTextPointer;
-						ctx.fillText(opts.txtWithdraw, -482, 1015);
+						ctx.fillText(opts.text.withdraw, -482, 1015);
 						
 						ctx.restore();
 					},
@@ -686,11 +686,13 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 			colorTextShadow: "white",
 			colorTextPointer: "white",
 			
-			txtPublicAddress: "公共广播",
-			txtDepositVerify: "ZÁLOHA / OVĚŘENÍ",
-			txtPrivateKey: "PRIVATER SCHLÜSSEL",
-			txtWalletImportFormat: "КОШЕЛЕК ИМПОРТ ФОРМАТ",
-			txtWithdraw: "PRIVATE KEY  /  WITHDRAW",
+			text: {
+				publicAddress: "公共广播",
+				depositVerify: "ZÁLOHA / OVĚŘENÍ",
+				privateKey: "PRIVATER SCHLÜSSEL",
+				walletImportFormat: "КОШЕЛЕК ИМПОРТ ФОРМАТ",
+				withdraw: "PRIVATE KEY  /  WITHDRAW",
+			},
 		};
 	</script>
 	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
@@ -699,10 +701,45 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 	<form id="frm">
 		Public Key: <input type="text" name="pubkey" value="topfen">
 		<a href="#" onclick="document.getElementById('canvasImg').src = PaperWallet.draw.frontImage(frm.pubkey.value, drawOpts);">Go</a>
+		<select id="designPicker" onChange="setDesign(this.value);">
+		  <option value="default">Standard (English/en)</option>
+		  <option value="holiday">Holiday / Christmas Design (English/en)</option>
+		  <option value="chinese">Standard (Chinese/zh)</option>
+		  <option value="czech">Standard (Czech/cs)</option>
+		  <option value="dutch">Standard (Dutch/nl)</option>
+		  <option value="french">Standard (French/fr)</option>
+		  <option value="german">Standard (German/de)</option>
+		  <option value="italian">Standard (Italian/it)</option>
+		  <option value="portuguese">Standard (Portuguese/pt)</option>
+		  <option value="russian">Standard (Russian/ru)</option>
+		  <option value="spanish">Standard (Spanish/es)</option>
+		</select>		
 	</form>
 	<img id="canvasImg" alt="right click to save">
 	
-	<script>
+	<script>		
+		function setDesign(val) {
+			var translations = {
+				german: {
+					publicAddress: "Öffentliche Adresse",
+					depositVerify: "Einzahlen / Bestätigen",
+					privateKey: "Privater Schlüssel",
+					walletImportFormat: "Brieftaschen Importformat",
+					withdraw: "Privater Schlüssel  /  Abheben",
+				},
+				"default": {
+					publicAddress: "PUBLIC ADDRESS",
+					depositVerify: "DEPOSIT / VERIFY",
+					privateKey: "PRIVATE KEY",
+					walletImportFormat: "WALLET IMPORT FORMAT",
+					withdraw: "PRIVATE KEY / WITHDRAW",
+				}
+			};
+			
+			drawOpts.text = translations[val] || translations["default"];	
+			document.getElementById('canvasImg').src = PaperWallet.draw.frontImage(frm.pubkey.value, drawOpts);			
+		}
+		
 		// create random text, just for test
 		var possible = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 		frm.pubkey.value = "";
