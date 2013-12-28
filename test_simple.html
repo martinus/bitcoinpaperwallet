@@ -505,7 +505,7 @@ if (typeof WalletDraw == "undefined") {
 				
 				ctx.save();
 				
-				ctx.font = "bold 25pt Calibri";	
+				ctx.font = "bold 22pt sans-serif";	
 				ctx.textAlign = 'center';	
 				ctx.fillStyle = "#1937a9";
 								
@@ -635,10 +635,10 @@ function draw(canvas, bitcoin_address) {
 	WalletDraw.utils.roundRect(ctx, 2416, 290, 384, 384, 20, "white");
 	
 	WalletDraw.draw.text(ctx, {
-		txtPublicAddres: "PUBLIC ADDRESS",
-		txtDepositVerify: "DEPOSIT / VERIFY",
-		txtPrivateKey: "PRIVATE KEY",
-		txtWalletImportFormat: "WALLET IMPORT FORMAT",
+		txtPublicAddres: "公共广播",
+		txtDepositVerify: "ZÁLOHA / OVĚŘENÍ",
+		txtPrivateKey: "PRIVATER SCHLÜSSEL",
+		txtWalletImportFormat: "КОШЕЛЕК ИМПОРТ ФОРМАТ",
 		txtWithdraw: "PRIVATE KEY  /  WITHDRAW",
 		});
 	
@@ -680,7 +680,7 @@ function update_img(id, txt) {
 }
 	</script>
 
-	
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
 </head>
 <body>
 	<form id="frm">
