@@ -473,7 +473,7 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 					fillTextStrongBlur: function(ctx, msg, x, y, offset, opts) {
 						ctx.save();
 						
-						ctx.shadowColor = opts.colorTextShadow;
+						ctx.shadowColor = opts.color.textShadow;
 						ctx.shadowBlur = 7;
 						ctx.shadowOffsetX = 4;
 						ctx.shadowOffsetY = 4;
@@ -505,7 +505,7 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						
 						ctx.font = opts.font;
 						ctx.textAlign = "center";
-						ctx.fillStyle = opts.colorText;
+						ctx.fillStyle = opts.color.text;
 						draw.fillTextStrongBlur(ctx, opts.text.publicAddress, 268, 320, 4, opts);
 						draw.fillTextStrongBlur(ctx, opts.text.depositVerify, 268, 696, 4, opts);
 						
@@ -515,7 +515,7 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						
 						
 						// text for green pointer
-						ctx.fillStyle = opts.colorTextPointer;
+						ctx.fillStyle = opts.color.textPointer;
 						ctx.fillText(opts.text.withdraw, -482, 1015);
 						
 						ctx.restore();
@@ -541,14 +541,14 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						
 						// draw background gradients
 						var grd = ctx.createLinearGradient(55, 82, 55, 807);
-						grd.addColorStop(0, opts.colorPublicUpper);
-						grd.addColorStop(1, opts.colorPublicLower);
+						grd.addColorStop(0, opts.color.publicUpper);
+						grd.addColorStop(1, opts.color.publicLower);
 						ctx.fillStyle = grd;
 						ctx.fillRect(55, 82, 958, 807);
 						
 						grd = ctx.createLinearGradient(1013, 0, 2961, 0)
-						grd.addColorStop(0, opts.colorPrivateLeft);
-						grd.addColorStop(1, opts.colorPrivateRight);
+						grd.addColorStop(0, opts.color.privateLeft);
+						grd.addColorStop(1, opts.color.privateRight);
 						ctx.fillStyle = grd;
 						ctx.fillRect(1013, 82, 2961, 807);
 						ctx.restore();
@@ -640,12 +640,12 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						
 						// draw guilloche
 						guillocheParams = PaperWallet.draw.guillocheParams(key);
-						guillocheParams.color = opts.colorGuilloche;
+						guillocheParams.color = opts.color.guilloche;
 						guillocheParams.centerPoint = cp;
 						PaperWallet.draw.guilloche(ctx,  guillocheParams);
 						
 						PaperWallet.draw.logos(ctx, cp);
-						PaperWallet.draw.pointer(ctx, opts.colorPointer);
+						PaperWallet.draw.pointer(ctx, opts.color.pointer);
 						
 						PaperWallet.draw.clearSurroundings(ctx);
 						
@@ -672,26 +672,29 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 		}
 	</script>
 	<script>
+		// options for drawing. text will be replaced in setDesign by correct translation.
 		var drawOpts = {
-			colorPublicUpper: "#fff57c",
-			colorPublicLower: "#f7931a",
-			colorPrivateLeft: "#8cd96f",			
-			colorPrivateRight: "#fff67d",
-			colorPointer: "#03ab5d",
-			colorGuilloche: "white",
+			color: {
+				publicUpper: "#fff57c",
+				publicLower: "#f7931a",
+				privateLeft: "#8cd96f",			
+				privateRight: "#fff67d",
+				pointer: "#03ab5d",
+				guilloche: "white",
+				
+				text: "#1937a9",
+				textShadow: "white",
+				textPointer: "white",				
+			},
 
 			font: "bold 22pt sans-serif",
-			
-			colorText: "#1937a9",
-			colorTextShadow: "white",
-			colorTextPointer: "white",
-			
+						
 			text: {
-				publicAddress: "公共广播",
-				depositVerify: "ZÁLOHA / OVĚŘENÍ",
-				privateKey: "PRIVATER SCHLÜSSEL",
-				walletImportFormat: "КОШЕЛЕК ИМПОРТ ФОРМАТ",
-				withdraw: "PRIVATE KEY  /  WITHDRAW",
+				publicAddress: "PUBLIC ADDRESS",
+				depositVerify: "DEPOSIT / VERIFY",
+				privateKey: "PRIVATE KEY",
+				walletImportFormat: "WALLET IMPORT FORMAT",
+				withdraw: "PRIVATE KEY / WITHDRAW",
 			},
 		};
 	</script>
@@ -713,7 +716,12 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 		  <option value="portuguese">Standard (Portuguese/pt)</option>
 		  <option value="russian">Standard (Russian/ru)</option>
 		  <option value="spanish">Standard (Spanish/es)</option>
-		</select>		
+		</select>
+		
+		<select id="bip38Picker" onChange="setBip38(this.value);">
+			<option value="default">Standard (Unencrypted)</option>
+			<option value="bip38">BIP38 (Encrypted)</option>
+		</select>
 	</form>
 	<img id="canvasImg" alt="right click to save">
 	
@@ -738,6 +746,38 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 			
 			drawOpts.text = translations[val] || translations["default"];	
 			document.getElementById('canvasImg').src = PaperWallet.draw.frontImage(frm.pubkey.value, drawOpts);			
+		}
+		
+		function setBip38(val) {
+			var colors = {
+				bip38: {
+					publicUpper: "#f2f8ff",
+					publicLower: "#5077cf",
+					privateLeft: "#8cd96f",			
+					privateRight: "#fff67d",
+					pointer: "#4040d0",
+					guilloche: "white",
+					
+					text: "#1937a9",
+					textShadow: "white",
+					textPointer: "white",				
+				},
+				"default": {
+					publicUpper: "#fff57c",
+					publicLower: "#f7931a",
+					privateLeft: "#8cd96f",			
+					privateRight: "#fff67d",
+					pointer: "#03ab5d",
+					guilloche: "white",
+					
+					text: "#1937a9",
+					textShadow: "white",
+					textPointer: "white",				
+				}
+			};
+			
+			drawOpts.color = colors[val] || colors["default"];	
+			document.getElementById('canvasImg').src = PaperWallet.draw.frontImage(frm.pubkey.value, drawOpts);						
 		}
 		
 		// create random text, just for test
