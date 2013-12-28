@@ -506,7 +506,7 @@ if (typeof WalletDraw == "undefined") {
 				ctx.save();
 				
 				ctx.font = "bold 22pt sans-serif";	
-				ctx.textAlign = 'center';	
+				ctx.textAlign = "center";
 				ctx.fillStyle = "#1937a9";
 								
 				utils.fillTextStrongBlur(ctx, txtPublicAddres, 268, 320, 4);
@@ -525,6 +525,21 @@ if (typeof WalletDraw == "undefined") {
 				
 				ctx.restore();
 			},
+			
+			obfuscation: function(ctx, x, y, w, h) {
+				ctx.save();
+				ctx.fillStyle = "black";
+				ctx.font = "10pt Courier";
+				ctx.textAlign = "center";
+
+				// create random text to black out private key pattern
+				var possible_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+				for (var i=0; i<6000; ++i) {
+					var letter = possible_letters[Math.floor(Math.random()*possible.length)];
+					ctx.fillText(letter, x + Math.random()*w, y + Math.random()*h);
+				}
+				ctx.restore();
+			}
 		};
 	})();
 }
@@ -627,11 +642,7 @@ function draw(canvas, bitcoin_address) {
 	// draw empty rectangle for public QR code
 	ctx.fillStyle = "white";
 	WalletDraw.utils.roundRect(ctx, 113, 344, 310, 310, 20, "white");
-	
-	// white rectangle for blackout private QR code pattern
 	WalletDraw.utils.roundRect(ctx, 1816, 290, 384, 384, 20, "white");
-	
-	// private QR code background
 	WalletDraw.utils.roundRect(ctx, 2416, 290, 384, 384, 20, "white");
 	
 	WalletDraw.draw.text(ctx, {
@@ -642,19 +653,7 @@ function draw(canvas, bitcoin_address) {
 		txtWithdraw: "PRIVATE KEY  /  WITHDRAW",
 		});
 	
-	ctx.fillStyle = "black";
-	ctx.font = "10pt Courier";
-
-	// create random text to black out private key pattern
-	var iters = 20;
-	var f_last = 0;
-	var possible = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	for (var i=0; i<6000; ++i) {
-		var f1 = Math.random();
-		var f2 = Math.random();
-		var txt = possible[Math.floor(Math.random()*possible.length)];
-		ctx.fillText(txt, 1827 + f2*360, 310 + 350*f1);
-	}
+	WalletDraw.draw.obfuscation(ctx, 1831, 310, 350, 350);
 }
 
 // Creates an image based on the given public key.
