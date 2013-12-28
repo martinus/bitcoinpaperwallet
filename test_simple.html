@@ -548,14 +548,14 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						
 						// draw background gradients
 						var grd = ctx.createLinearGradient(55, 82, 55, 807);
-						grd.addColorStop(0, opts.colorPublicLower);
-						grd.addColorStop(1, opts.colorPublicUpper);
+						grd.addColorStop(0, opts.colorPublicUpper);
+						grd.addColorStop(1, opts.colorPublicLower);
 						ctx.fillStyle = grd;
 						ctx.fillRect(55, 82, 958, 807);
 						
 						grd = ctx.createLinearGradient(1013, 0, 2961, 0)
-						grd.addColorStop(0, opts.colorPrivateRight);
-						grd.addColorStop(1, opts.colorPrivateLeft);
+						grd.addColorStop(0, opts.colorPrivateLeft);
+						grd.addColorStop(1, opts.colorPrivateRight);
 						ctx.fillStyle = grd;
 						ctx.fillRect(1013, 82, 2961, 807);
 						ctx.restore();
@@ -680,10 +680,10 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 	</script>
 	<script>
 		var drawOpts = {
-			colorPublicUpper: "#f7931a",
-			colorPublicLower: "#fff57c",
-			colorPrivateLeft: "#fff67d",
-			colorPrivateRight: "#8cd96f",			
+			colorPublicUpper: "#fff57c",
+			colorPublicLower: "#f7931a",
+			colorPrivateLeft: "#8cd96f",			
+			colorPrivateRight: "#fff67d",
 			colorPointer: "#03ab5d",						
 			txtPublicAddres: "公共广播",			
 			txtDepositVerify: "ZÁLOHA / OVĚŘENÍ",
