@@ -398,26 +398,22 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						msg = Crypto.SHA256(msg, {asBytes: true});
 						var minorR = scaled_between(float01(msg), 0.1, 3);
 						
-						msg = Crypto.SHA256(msg, {asBytes: true});
-						
 						// not using floor here, because why not. It looks good nontheless and might
 						// get more unique results.
+						msg = Crypto.SHA256(msg, {asBytes: true});
 						var steps = scaled_between(float01(msg), 500, 10000);
-						var width = 3000/steps;
 						
 						msg = Crypto.SHA256(msg, {asBytes: true});
 						var radiusEffectConstant = scaled_between(float01(msg), majorR*0.9, majorR);
 						
-						var angleMultiplier = 2;
-					
 						return  {
-							angleMultiplier: angleMultiplier,
+							angleMultiplier: 2,
 							majorR: majorR,
 							minorR: minorR,
 							radiusEffectConstant: radiusEffectConstant,
 							scale: 9,
 							steps: steps,		
-							width: width
+							width: 3000/steps
 						}
 					},
 					
