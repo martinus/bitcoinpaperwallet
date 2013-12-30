@@ -110,35 +110,29 @@
 							color = opts.color || 'rgb(0,0,255)',
 							width = opts.width || 0.5;
 							globalAlpha = opts.globalAlpha || 1.0;
-					 
+							
+						ctx.strokeStyle = color;
+						ctx.lineWidth = width;
 						ctx.globalAlpha = globalAlpha;
 					 
-						var	diff = majorR - minorR,
-							s = diff / minorR,
-							theta = 0,
-							radiusEffect = radiusEffectConstant + minorR,
-							oldX, oldY;
+						var	diff = majorR - minorR;
+						var s = diff / minorR;
+						var radiusEffect = radiusEffectConstant + minorR;
+						var theta_factor = angleMultiplier * Math.PI * 4;
 
-						for (var i = steps; i>0; --i) {
-							var new_theta = angleMultiplier * theta,
-								x = (diff * Math.sin(new_theta) + radiusEffect * Math.sin(new_theta * s))*scale + (centerPoint.x),
-								y = (diff * Math.cos(new_theta) - radiusEffect * Math.cos(new_theta * s))*scale + (centerPoint.y);
+						ctx.beginPath();
+						for (var i = 0; i<steps; ++i) {
+							var theta = i * theta_factor / steps;
+							var x = (diff * Math.sin(theta) + radiusEffect * Math.sin(theta * s))*scale + (centerPoint.x);
+							var y = (diff * Math.cos(theta) - radiusEffect * Math.cos(theta * s))*scale + (centerPoint.y);
 
-							theta += Math.PI * 4 / steps;
-
-							if (oldX) {
-								ctx.strokeStyle = color;
-								ctx.lineWidth = width;
-								ctx.beginPath();
-								ctx.moveTo(oldX, oldY);
-								ctx.lineTo(x, y);
-								ctx.closePath();
-								ctx.stroke();
+							if (i == steps) {
+								ctx.moveTo(x, y);
+							} else {
+								ctx.lineTo(x, y);			
 							}
-
-							oldX = x;
-							oldY = y;
 						}
+						ctx.stroke();
 						
 						ctx.restore();
 					},
@@ -181,23 +175,22 @@
 						msg = Crypto.SHA256(msg, {asBytes: true});
 						var minorR = scaled_between(float01(msg), 0.1, 3);
 						
+						// not using floor here, because why not. It looks good nontheless and might
+						// get more unique results.
 						msg = Crypto.SHA256(msg, {asBytes: true});
 						var steps = scaled_between(float01(msg), 500, 10000);
-						var width = 3000/steps;
 						
 						msg = Crypto.SHA256(msg, {asBytes: true});
 						var radiusEffectConstant = scaled_between(float01(msg), majorR*0.9, majorR);
 						
-						var angleMultiplier = 2;
-					
 						return  {
-							angleMultiplier: angleMultiplier,
+							angleMultiplier: 2,
 							majorR: majorR,
 							minorR: minorR,
 							radiusEffectConstant: radiusEffectConstant,
 							scale: 9,
 							steps: steps,		
-							width: width
+							width: 3000/steps
 						}
 					},
 					
@@ -338,9 +331,11 @@
 					},
 					
 					logos: function(ctx, cp) {
+						ctx.save();
 						var w = 90;
 						
 						// draw circle for bitcoin logo
+						ctx.beginPath();
 						ctx.arc(cp.x, cp.y, w/2+5, 0, 2*Math.PI, false);
 						ctx.fillStyle = "white";
 						ctx.fill();
@@ -348,6 +343,7 @@
 						// logo & text
 						ctx.drawImage(PaperWallet.draw.imgBitcoinLogo, cp.x-w/2, cp.y-w/2, w, w);
 						ctx.drawImage(PaperWallet.draw.imgBitcoinText, cp.x+w/2+10, cp.y-20, 160, 43);
+						ctx.restore();
 					},
 
 					pointer: function(ctx, colorPointer) {
@@ -426,7 +422,6 @@
 						guillocheParams.color = opts.color.guilloche;
 						guillocheParams.centerPoint = cp;
 						PaperWallet.draw.guilloche(ctx,  guillocheParams);
-						
 						PaperWallet.draw.logos(ctx, cp);
 						PaperWallet.draw.pointer(ctx, opts.color.pointer);
 						
@@ -448,11 +443,40 @@
 						
 						PaperWallet.draw.obfuscation(ctx, 1831, 310, 350, 350);
 
+						// this is by far the slowest of everything.
+						// painting takes ca. 0.02 seconds, toDataUrl() takes about 2 seconds...
 						return canvas.toDataURL();
 					}
 				};
 			})();
 		}
+	</script>
+	<script>
+		// options for drawing. text will be replaced in setDesign by correct translation.
+		var drawOpts = {
+			color: {
+				publicUpper: "#fff57c",
+				publicLower: "#f7931a",
+				privateLeft: "#8cd96f",			
+				privateRight: "#fff67d",
+				pointer: "#03ab5d",
+				guilloche: "white",
+				
+				text: "#1937a9",
+				textShadow: "white",
+				textPointer: "white",				
+			},
+
+			font: "bold 22pt sans-serif",
+						
+			text: {
+				publicAddress: "PUBLIC ADDRESS",
+				depositVerify: "DEPOSIT / VERIFY",
+				privateKey: "PRIVATE KEY",
+				walletImportFormat: "WALLET IMPORT FORMAT",
+				withdraw: "PRIVATE KEY / WITHDRAW",
+			},
+		};
 	</script>
 
 	<script type="text/javascript">
