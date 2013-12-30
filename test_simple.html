@@ -332,29 +332,23 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						ctx.lineWidth = width;
 						ctx.globalAlpha = globalAlpha;
 					 
-						var	diff = majorR - minorR,
-							s = diff / minorR,
-							theta = 0,
-							radiusEffect = radiusEffectConstant + minorR,
-							oldX, oldY;
+						var	diff = majorR - minorR;
+						var s = diff / minorR;
+						var radiusEffect = radiusEffectConstant + minorR;
+						var theta_factor = angleMultiplier * Math.PI * 4;
 
 						ctx.beginPath();
-						for (var i = steps; i>0; --i) {
-							var new_theta = angleMultiplier * theta,
-								x = (diff * Math.sin(new_theta) + radiusEffect * Math.sin(new_theta * s))*scale + (centerPoint.x),
-								y = (diff * Math.cos(new_theta) - radiusEffect * Math.cos(new_theta * s))*scale + (centerPoint.y);
+						for (var i = 0; i<steps; ++i) {
+							var theta = i * theta_factor / steps;
+							var x = (diff * Math.sin(theta) + radiusEffect * Math.sin(theta * s))*scale + (centerPoint.x);
+							var y = (diff * Math.cos(theta) - radiusEffect * Math.cos(theta * s))*scale + (centerPoint.y);
 
-							theta += Math.PI * 4 / steps;
-
-							if (oldX) {
-								ctx.moveTo(oldX, oldY);
-								ctx.lineTo(x, y);
-							}
-
-							oldX = x;
-							oldY = y;
+							if (i == steps) {
+								ctx.moveTo(x, y);
+							} else {
+								ctx.lineTo(x, y);			
+							}							
 						}
-						ctx.moveTo(x, y);
 						ctx.stroke();
 						
 						ctx.restore();
@@ -558,6 +552,7 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						var w = 90;
 						
 						// draw circle for bitcoin logo
+						ctx.beginPath();
 						ctx.arc(cp.x, cp.y, w/2+5, 0, 2*Math.PI, false);
 						ctx.fillStyle = "white";
 						ctx.fill();
@@ -644,7 +639,6 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						guillocheParams.color = opts.color.guilloche;
 						guillocheParams.centerPoint = cp;
 						PaperWallet.draw.guilloche(ctx,  guillocheParams);
-						
 						PaperWallet.draw.logos(ctx, cp);
 						PaperWallet.draw.pointer(ctx, opts.color.pointer);
 						
@@ -706,7 +700,7 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 <body>
 	<form id="frm">
 		Public Key: <input type="text" name="pubkey" value="topfen">
-		<a href="#" onclick="document.getElementById('canvasImg').src = PaperWallet.draw.frontImage(frm.pubkey.value, drawOpts);">Go</a>
+		<a href="#" onclick="update();">Go</a>
 		<select id="designPicker" onChange="setDesign(this.value);">
 		  <option value="default">Standard (English/en)</option>
 		  <option value="holiday">Holiday / Christmas Design (English/en)</option>
@@ -730,6 +724,27 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 	<img id="canvasImg" alt="right click to save">
 	
 	<script>		
+		function update() {
+			var startTime = new Date().getTime();
+			document.getElementById('canvasImg').src = PaperWallet.draw.frontImage(frm.pubkey.value, drawOpts);
+			var elapsed = new Date().getTime() - startTime;
+			
+			var params = PaperWallet.draw.guillocheParams(frm.pubkey.value);
+			var str = "";
+			str += "angleMultiplier: " + params.angleMultiplier;
+			str += ", majorR: " + params.majorR;
+			str += ", minorR: " + params.minorR;
+			str += ", radiusEffectConstant: " + params.radiusEffectConstant;
+			str += ", scale: " + params.scale;
+			str += ", steps: " + params.steps;
+			str += ", width: " + params.width;
+			
+			
+			str += "<br />elapsed: " + (elapsed/1000) + " seconds";
+			
+			document.getElementById("params").innerHTML = str;
+		}
+		
 		function setDesign(val) {
 			var translations = {
 				german: {
@@ -748,8 +763,8 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 				}
 			};
 			
-			drawOpts.text = translations[val] || translations["default"];	
-			document.getElementById('canvasImg').src = PaperWallet.draw.frontImage(frm.pubkey.value, drawOpts);			
+			drawOpts.text = translations[val] || translations["default"];
+			update();
 		}
 		
 		function setBip38(val) {
@@ -781,7 +796,7 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 			};
 			
 			drawOpts.color = colors[val] || colors["default"];	
-			document.getElementById('canvasImg').src = PaperWallet.draw.frontImage(frm.pubkey.value, drawOpts);						
+			update();
 		}
 		
 		// extract parameter from URL
@@ -819,25 +834,8 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 				frm.pubkey.value += possible[Math.floor(Math.random()*possible.length)];
 			}
 		}		
-		
-		var startTime = new Date().getTime();
-		document.getElementById('canvasImg').src = PaperWallet.draw.frontImage(frm.pubkey.value, drawOpts);
-		var elapsed = new Date().getTime() - startTime;
 
-		var params = PaperWallet.draw.guillocheParams(frm.pubkey.value);
-		var str = "";
-		str += "angleMultiplier: " + params.angleMultiplier;
-		str += ", majorR: " + params.majorR;
-		str += ", minorR: " + params.minorR;
-		str += ", radiusEffectConstant: " + params.radiusEffectConstant;
-		str += ", scale: " + params.scale;
-		str += ", steps: " + params.steps;
-		str += ", width: " + params.width;
-		
-		
-		str += "<br />elapsed: " + (elapsed/1000) + " seconds";
-		
-		document.getElementById("params").innerHTML = str;
+		update();
 	</script>
 </body>
 </html>
