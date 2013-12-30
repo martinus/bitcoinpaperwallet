@@ -338,6 +338,7 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 							radiusEffect = radiusEffectConstant + minorR,
 							oldX, oldY;
 
+						ctx.beginPath();
 						for (var i = steps; i>0; --i) {
 							var new_theta = angleMultiplier * theta,
 								x = (diff * Math.sin(new_theta) + radiusEffect * Math.sin(new_theta * s))*scale + (centerPoint.x),
@@ -346,16 +347,15 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 							theta += Math.PI * 4 / steps;
 
 							if (oldX) {
-								ctx.beginPath();
 								ctx.moveTo(oldX, oldY);
 								ctx.lineTo(x, y);
-								ctx.closePath();
-								ctx.stroke();
 							}
 
 							oldX = x;
 							oldY = y;
 						}
+						ctx.moveTo(x, y);
+						ctx.stroke();
 						
 						ctx.restore();
 					},
@@ -554,6 +554,7 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 					},
 					
 					logos: function(ctx, cp) {
+						ctx.save();
 						var w = 90;
 						
 						// draw circle for bitcoin logo
@@ -564,6 +565,7 @@ if (typeof Crypto == "undefined" || !Crypto.util) {
 						// logo & text
 						ctx.drawImage(PaperWallet.draw.imgBitcoinLogo, cp.x-w/2, cp.y-w/2, w, w);
 						ctx.drawImage(PaperWallet.draw.imgBitcoinText, cp.x+w/2+10, cp.y-20, 160, 43);
+						ctx.restore();
 					},
 
 					pointer: function(ctx, colorPointer) {
